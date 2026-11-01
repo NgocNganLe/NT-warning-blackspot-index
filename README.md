@@ -7,10 +7,10 @@ Team 10 (registration ID DIC010): **Last Bar**
 
 | Member | Role |
 | --- | --- |
-| Van Hoi (Hendrick) Dang | Data pipeline, index design, report |
-| Le Nhat Minh (Thomas) Tran | Data collection, analysis, visualisation |
-| Minh Hoang (Miho) Bui | Offline reporting app |
-| Ngoc Ngan (Kelly) Le | Slide deck, design, ethics section |
+| Van Hoi (Hendrick) Dang|
+| Le Nhat Minh (Thomas) Tran|
+| Minh Hoang (Miho) Bui|
+| Ngoc Ngan (Kelly) Le |
 
 Repository: https://github.com/HendrickDang/nt-warning-blackspot-index
 
