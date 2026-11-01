@@ -12,7 +12,7 @@ Team 10 (registration ID DIC010): **Last Bar**
 | Minh Hoang (Miho) Bui|
 | Ngoc Ngan (Kelly) Le |
 
-Repository: https://github.com/HendrickDang/nt-warning-blackspot-index
+Repository: https://github.com/NgocNganLe/NT-warning-blackspot-index
 
 ---
 
