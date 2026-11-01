@@ -1,0 +1,366 @@
+import React from "react";
+import type { LayerState, ReportSeverity } from "../types";
+import { REPORT_SEVERITY_COLORS } from "../types";
+import { BURNT_AREA_MONTHS, HOTSPOT_BANDS } from "../bushfire";
+import { WBI_TIER_STYLES } from "../utils/wbi";
+import { TOWER_GLYPH } from "../utils/towerGlyph";
+
+interface Props {
+  layers: LayerState;
+  setLayers: React.Dispatch<React.SetStateAction<LayerState>>;
+}
+
+export default function LayersPanel({ layers, setLayers }: Props) {
+  const toggle = (key: keyof LayerState) =>
+    setLayers((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  // Helper to bulk-toggle an array of layer keys
+  const toggleSection = (keys: (keyof LayerState)[], enable: boolean) => {
+    setLayers((prev) => {
+      const next = { ...prev };
+      keys.forEach((k) => (next[k] = enable));
+      return next;
+    });
+  };
+
+  return (
+    <aside className="w-full h-full bg-white flex flex-col select-none shadow-sm">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Map Layers</h2>
+          <p className="text-xs text-slate-500">Toggle visibility of map data layers</p>
+        </div>
+      </div>
+
+      {/* Scrollable Layer Groups */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+        {/* Map Overlays */}
+        <Section
+          title="Map Layers"
+          onSelectAll={() => toggleSection(["communities", "coverage"], true)}
+          onClearAll={() => toggleSection(["communities", "coverage"], false)}
+        >
+          <CheckboxItem
+            label="Communities"
+            checked={layers.communities}
+            onChange={() => toggle("communities")}
+          />
+          {layers.communities && <WbiLegend />}
+
+          <CheckboxItem
+            label="Coverage"
+            checked={layers.coverage}
+            onChange={() => toggle("coverage")}
+          />
+          {layers.coverage && <CoverageLegend />}
+        </Section>
+
+        {/* Field Reports (mobile submissions) */}
+        <Section
+          title="Field Reports (Live)"
+          onSelectAll={() => toggleSection(["reports"], true)}
+          onClearAll={() => toggleSection(["reports"], false)}
+        >
+          <CheckboxItem
+            label="Hazard Reports"
+            badge="Live"
+            checked={layers.reports}
+            onChange={() => toggle("reports")}
+          />
+          {layers.reports && <ReportLegend />}
+        </Section>
+
+        {/* Live Bushfire (NAFI / FireNorth WMS) */}
+        <Section
+          title="Bushfire (Live)"
+          onSelectAll={() => toggleSection(["activeBushfires", "burntAreas"], true)}
+          onClearAll={() => toggleSection(["activeBushfires", "burntAreas"], false)}
+        >
+          <CheckboxItem
+            label="Active Fire Hotspots (24h)"
+            badge="Live"
+            checked={layers.activeBushfires}
+            onChange={() => toggle("activeBushfires")}
+          />
+          {layers.activeBushfires && <HotspotLegend />}
+
+          <CheckboxItem
+            label="Burnt Areas (Current Year)"
+            checked={layers.burntAreas}
+            onChange={() => toggle("burntAreas")}
+          />
+          {layers.burntAreas && <BurntAreaLegend />}
+        </Section>
+
+        {/* Network Infrastructure */}
+        <Section
+          title="Network Infrastructure"
+          onSelectAll={() => toggleSection(["towers"], true)}
+          onClearAll={() => toggleSection(["towers"], false)}
+        >
+          <CheckboxItem
+            label="Cell Towers"
+            checked={layers.towers}
+            onChange={() => toggle("towers")}
+          />
+          {layers.towers && <TowerLegend />}
+        </Section>
+
+        {/* Base Map Settings */}
+        <Section title="Base Map & Boundaries">
+          <CheckboxItem
+            label="Base Map"
+            checked={layers.baseMap}
+            onChange={() => toggle("baseMap")}
+          />
+          <CheckboxItem
+            label="NT Boundary"
+            checked={layers.ntBoundary}
+            onChange={() => toggle("ntBoundary")}
+          />
+        </Section>
+      </div>
+    </aside>
+  );
+}
+
+function Section({
+  title,
+  children,
+  onSelectAll,
+  onClearAll,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onSelectAll?: () => void;
+  onClearAll?: () => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase">{title}</h3>
+        {onSelectAll && onClearAll && (
+          <div className="flex items-center gap-2 text-xs">
+            <button
+              type="button"
+              onClick={onSelectAll}
+              className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            >
+              All
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="text-slate-400 hover:text-slate-600 font-medium transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function CheckboxItem({
+  label,
+  badge,
+  checked,
+  onChange,
+}: {
+  label: string;
+  badge?: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label
+      className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 border focus-within:ring-2 focus-within:ring-indigo-500 ${
+        checked
+          ? "bg-indigo-50/50 border-indigo-200 text-indigo-950"
+          : "bg-transparent border-transparent text-slate-700 hover:bg-slate-50"
+      }`}
+    >
+      <span className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="sr-only"
+        />
+        <span
+          aria-hidden="true"
+          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+            checked
+              ? "bg-indigo-600 border-indigo-600"
+              : "border-slate-300 bg-white group-hover:border-slate-400"
+          }`}
+        >
+          {checked && (
+            <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 20 20">
+              <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+            </svg>
+          )}
+        </span>
+        <span className="text-sm font-medium">{label}</span>
+      </span>
+
+      {badge && (
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+          {badge}
+        </span>
+      )}
+    </label>
+  );
+}
+
+function LegendShell({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function WbiLegend() {
+  return (
+    <LegendShell title="Community colour = WBI tier">
+      <ul className="space-y-1.5">
+        {WBI_TIER_STYLES.map((tier) => (
+          <li key={tier.tier} className="flex items-center justify-between text-xs text-slate-600">
+            <span className="flex items-center gap-2">
+              <span
+                className="h-3.5 w-3.5 rounded-full border"
+                style={{ backgroundColor: tier.fill, borderColor: tier.stroke }}
+                aria-hidden="true"
+              />
+              {tier.tier}
+            </span>
+            <span className="text-slate-400">{tier.range}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-[10px] text-slate-400 mt-2 leading-snug">
+        Warning Blackspot Index 0–100. Click a community for its pillar breakdown.
+      </p>
+    </LegendShell>
+  );
+}
+
+function CoverageLegend() {
+  return (
+    <LegendShell title="Mobile coverage contours">
+      <div className="flex items-center gap-2 text-xs text-slate-600">
+        <span
+          className="h-3.5 w-3.5 rounded-sm border border-blue-600"
+          style={{ backgroundColor: "rgba(59,130,246,0.25)" }}
+          aria-hidden="true"
+        />
+        Modelled coverage footprint
+      </div>
+    </LegendShell>
+  );
+}
+
+function TowerLegend() {
+  return (
+    <LegendShell title="Cell towers">
+      <div className="flex items-center gap-2 text-xs text-slate-600">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-4 w-4 shrink-0"
+          fill="none"
+          stroke={TOWER_GLYPH.stroke}
+          strokeWidth={TOWER_GLYPH.strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {TOWER_GLYPH.paths.map((d) => (
+            <path key={d} d={d} />
+          ))}
+          <circle
+            cx={TOWER_GLYPH.tip.cx}
+            cy={TOWER_GLYPH.tip.cy}
+            r={TOWER_GLYPH.tip.r}
+            fill={TOWER_GLYPH.fill}
+          />
+        </svg>
+        NT tower site (ACCC / RFNSA)
+      </div>
+    </LegendShell>
+  );
+}
+
+function ReportLegend() {
+  const severities: ReportSeverity[] = ["Low", "Medium", "High", "Urgent"];
+  return (
+    <LegendShell title="Hazard report severity">
+      <ul className="space-y-1.5">
+        {severities.map((severity) => (
+          <li key={severity} className="flex items-center gap-2 text-xs text-slate-600">
+            <span
+              className="h-3.5 w-3.5 rounded-full border-2 border-white shadow"
+              style={{ backgroundColor: REPORT_SEVERITY_COLORS[severity] }}
+              aria-hidden="true"
+            />
+            {severity}
+          </li>
+        ))}
+      </ul>
+      <p className="text-[10px] text-slate-400 mt-2 leading-snug">
+        Submitted from the Warning Blackspot mobile app. Click a marker for details.
+      </p>
+    </LegendShell>
+  );
+}
+
+function HotspotLegend() {
+  return (
+    <LegendShell title="Hotspot age (satellite)">
+      <ul className="space-y-1.5">
+        {HOTSPOT_BANDS.map((band) => (
+          <li key={band.label} className="flex items-center gap-2 text-xs text-slate-600">
+            <span
+              className="w-4 text-center text-sm leading-none"
+              style={{ color: band.color }}
+              aria-hidden="true"
+            >
+              {band.glyph}
+            </span>
+            <span>{band.label}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-[10px] text-slate-400 mt-2 leading-snug">
+        Symbol size does not indicate fire size. Locations accurate to ~1.5 km.
+      </p>
+    </LegendShell>
+  );
+}
+
+function BurntAreaLegend() {
+  return (
+    <LegendShell title="Burnt area — colour = month burnt">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+        {BURNT_AREA_MONTHS.map((month) => (
+          <div key={month.label} className="flex items-center gap-2 text-xs text-slate-600">
+            <span
+              className="h-3.5 w-3.5 rounded-sm border border-black/10 shrink-0"
+              style={{ backgroundColor: month.color, opacity: 0.6 }}
+              aria-hidden="true"
+            />
+            <span>{month.label}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-slate-400 mt-2 leading-snug">
+        Warmer colours (yellow → pink → purple) mark the hotter, later months when fires are generally more intense.
+      </p>
+    </LegendShell>
+  );
+}
