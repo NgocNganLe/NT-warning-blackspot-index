@@ -5,8 +5,8 @@
 CDU IT Code Fair 2026, Data Innovation Challenge, Theme: Remote Connectivity
 Team 10 (registration ID DIC010): **Last Bar**
 
-| Member | Role |
-| --- | --- |
+| Member |
+| --- | 
 | Van Hoi (Hendrick) Dang|
 | Le Nhat Minh (Thomas) Tran|
 | Minh Hoang (Miho) Bui|
